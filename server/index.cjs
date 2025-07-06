@@ -80,57 +80,74 @@ app.get('/health', (req, res) => {
 });
 
 // Create partner
-app.post('/partners', upload.single('nid'), (req, res) => {
-  console.log('POST /partners - Body:', req.body);
-  console.log('POST /partners - File:', req.file);
+app.post(
+  '/partners',
+  upload.fields([
+    { name: 'nid', maxCount: 1 },
+    { name: 'passport', maxCount: 1 },
+  ]),
+  (req, res) => {
+    console.log('POST /partners - Body:', req.body);
+    console.log('POST /partners - Files:', req.files);
 
-  const { name, email, phone, address, partner_type } = req.body;
-  if (
-    !name ||
-    !partner_type ||
-    !['customer', 'vendor'].includes(partner_type)
-  ) {
-    console.log('Validation failed:', { name, partner_type });
-    return res
-      .status(400)
-      .json({ error: 'Name and valid partner_type are required' });
-  }
-  const nid_filename = req.file ? req.file.filename : null;
-  console.log('Inserting partner with data:', {
-    name,
-    email,
-    phone,
-    address,
-    partner_type,
-    nid_filename,
-  });
-
-  db.query(
-    'INSERT INTO partners (name, email, phone, address, partner_type, nid_filename) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, email, phone, address, partner_type, nid_filename],
-    (err, result) => {
-      if (err) {
-        console.error('Database insert error:', err);
-        return res.status(500).json({ error: 'DB error', details: err });
-      }
-
-      console.log('Insert successful, ID:', result.insertId);
-
-      db.query(
-        'SELECT * FROM partners WHERE id = ?',
-        [result.insertId],
-        (err2, rows) => {
-          if (err2) {
-            console.error('Database select error:', err2);
-            return res.status(500).json({ error: 'DB error', details: err2 });
-          }
-          console.log('Partner created:', rows[0]);
-          res.status(201).json({ partner: rows[0] });
-        }
-      );
+    const { name, email, phone, address, partner_type } = req.body;
+    if (
+      !name ||
+      !partner_type ||
+      !['customer', 'vendor'].includes(partner_type)
+    ) {
+      console.log('Validation failed:', { name, partner_type });
+      return res
+        .status(400)
+        .json({ error: 'Name and valid partner_type are required' });
     }
-  );
-});
+    const nid_filename = req.files?.nid?.[0]?.filename || null;
+    const passport_filename = req.files?.passport?.[0]?.filename || null;
+    console.log('Inserting partner with data:', {
+      name,
+      email,
+      phone,
+      address,
+      partner_type,
+      nid_filename,
+      passport_filename,
+    });
+
+    db.query(
+      'INSERT INTO partners (name, email, phone, address, partner_type, nid_filename, passport_filename) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        name,
+        email,
+        phone,
+        address,
+        partner_type,
+        nid_filename,
+        passport_filename,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error('Database insert error:', err);
+          return res.status(500).json({ error: 'DB error', details: err });
+        }
+
+        console.log('Insert successful, ID:', result.insertId);
+
+        db.query(
+          'SELECT * FROM partners WHERE id = ?',
+          [result.insertId],
+          (err2, rows) => {
+            if (err2) {
+              console.error('Database select error:', err2);
+              return res.status(500).json({ error: 'DB error', details: err2 });
+            }
+            console.log('Partner created:', rows[0]);
+            res.status(201).json({ partner: rows[0] });
+          }
+        );
+      }
+    );
+  }
+);
 
 // List partners
 app.get('/partners', (req, res) => {
@@ -141,27 +158,42 @@ app.get('/partners', (req, res) => {
 });
 
 // Update partner
-app.put('/partners/:id', upload.single('nid'), (req, res) => {
-  const { id } = req.params;
-  const { name, email, phone, address, partner_type } = req.body;
-  let updateFields = [name, email, phone, address, partner_type];
-  let sql =
-    'UPDATE partners SET name=?, email=?, phone=?, address=?, partner_type=?';
-  if (req.file) {
-    sql += ', nid_filename=?';
-    updateFields.push(req.file.filename);
-  }
-  sql += ' WHERE id=?';
-  updateFields.push(id);
-  db.query(sql, updateFields, (err, result) => {
-    if (err) return res.status(500).json({ error: 'DB error', details: err });
-    db.query('SELECT * FROM partners WHERE id = ?', [id], (err2, rows) => {
-      if (err2)
-        return res.status(500).json({ error: 'DB error', details: err2 });
-      res.json({ partner: rows[0] });
+app.put(
+  '/partners/:id',
+  upload.fields([
+    { name: 'nid', maxCount: 1 },
+    { name: 'passport', maxCount: 1 },
+  ]),
+  (req, res) => {
+    const { id } = req.params;
+    const { name, email, phone, address, partner_type } = req.body;
+    let updateFields = [name, email, phone, address, partner_type];
+    let sql =
+      'UPDATE partners SET name=?, email=?, phone=?, address=?, partner_type=?';
+
+    if (req.files?.nid?.[0]) {
+      sql += ', nid_filename=?';
+      updateFields.push(req.files.nid[0].filename);
+    }
+
+    if (req.files?.passport?.[0]) {
+      sql += ', passport_filename=?';
+      updateFields.push(req.files.passport[0].filename);
+    }
+
+    sql += ' WHERE id=?';
+    updateFields.push(id);
+
+    db.query(sql, updateFields, (err, result) => {
+      if (err) return res.status(500).json({ error: 'DB error', details: err });
+      db.query('SELECT * FROM partners WHERE id = ?', [id], (err2, rows) => {
+        if (err2)
+          return res.status(500).json({ error: 'DB error', details: err2 });
+        res.json({ partner: rows[0] });
+      });
     });
-  });
-});
+  }
+);
 
 // Delete partner
 app.delete('/partners/:id', (req, res) => {

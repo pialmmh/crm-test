@@ -1,3 +1,4 @@
+import { BarChart3, Home, Menu, ShoppingCart, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import {
   Navigate,
@@ -15,61 +16,96 @@ import { useChat } from './hooks/useChat';
 function App() {
   const { messages, isLoading, error, sendMessage, clearMessages } = useChat();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
+  const toggleSidebar = () => setSidebarCollapsed(!sidebarCollapsed);
+
+  const menuItems = [
+    { name: 'Dashboard', path: '/dashboard', icon: Home },
+    { name: 'Sales', path: '/sales', icon: ShoppingCart },
+    { name: 'Partners', path: '/partners', icon: Users },
+  ];
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100 flex">
-        {/* Side Menu Bar */}
-        <div className="w-20 sm:w-24 md:w-32 bg-gray-800 text-white flex flex-col p-1 min-h-screen">
-          <h3 className="text-xs sm:text-sm font-semibold mb-1 mt-1 px-1">
-            ERP/CRM
-          </h3>
-          <ul className="space-y-0.5">
-            <li>
-              <a
-                href="/dashboard"
-                className={`w-full block text-left hover:text-gray-300 px-1 py-0.5 ${
-                  window.location.pathname === '/dashboard'
-                    ? 'font-bold underline'
-                    : ''
-                } text-xs`}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
+        {/* Modern Sidebar */}
+        <div
+          className={`${
+            sidebarCollapsed ? 'w-16' : 'w-64'
+          } bg-white shadow-xl border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out`}
+        >
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              {!sidebarCollapsed && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-white" />
+                  </div>
+                  <h1 className="text-xl font-bold text-gray-800">ERP/CRM</h1>
+                </div>
+              )}
+              <button
+                onClick={toggleSidebar}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <a
-                href="/sales"
-                className={`w-full block text-left hover:text-gray-300 px-1 py-0.5 ${
-                  window.location.pathname === '/sales'
-                    ? 'font-bold underline'
-                    : ''
-                } text-xs`}
-              >
-                Sales
-              </a>
-            </li>
-            <li>
-              <a
-                href="/partners"
-                className={`w-full block text-left hover:text-gray-300 px-1 py-0.5 ${
-                  window.location.pathname === '/partners'
-                    ? 'font-bold underline'
-                    : ''
-                } text-xs`}
-              >
-                Partners
-              </a>
-            </li>
-          </ul>
+                {sidebarCollapsed ? (
+                  <Menu className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <X className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4">
+            <ul className="space-y-2">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = window.location.pathname === item.path;
+
+                return (
+                  <li key={item.name}>
+                    <a
+                      href={item.path}
+                      className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      <Icon
+                        className={`w-5 h-5 ${
+                          isActive ? 'text-white' : 'text-gray-500'
+                        }`}
+                      />
+                      {!sidebarCollapsed && (
+                        <span className="font-medium">{item.name}</span>
+                      )}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Footer */}
+          {!sidebarCollapsed && (
+            <div className="p-4 border-t border-gray-200">
+              <div className="text-xs text-gray-500 text-center">
+                © 2025 ERP/CRM System
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="w-full max-w-4xl p-8 bg-white rounded-xl shadow-md mt-8">
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto">
               <Routes>
                 <Route
                   path="/"
@@ -78,26 +114,76 @@ function App() {
                 <Route
                   path="/dashboard"
                   element={
-                    <>
-                      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-                        Dashboard
-                      </h1>
-                      <p>Welcome to your ERP/CRM system dashboard.</p>
-                    </>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                      <div className="flex items-center space-x-4 mb-6">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                          <Home className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h1 className="text-3xl font-bold text-gray-900">
+                            Dashboard
+                          </h1>
+                          <p className="text-gray-600">
+                            Welcome to your ERP/CRM system
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                          <h3 className="font-semibold text-blue-900 mb-2">
+                            Total Partners
+                          </h3>
+                          <p className="text-2xl font-bold text-blue-700">0</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                          <h3 className="font-semibold text-green-900 mb-2">
+                            Active Sales
+                          </h3>
+                          <p className="text-2xl font-bold text-green-700">0</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+                          <h3 className="font-semibold text-purple-900 mb-2">
+                            Revenue
+                          </h3>
+                          <p className="text-2xl font-bold text-purple-700">
+                            $0
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   }
                 />
                 <Route
                   path="/sales"
                   element={
-                    <>
-                      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-                        Sales
-                      </h1>
-                      <p>Sales functionality goes here.</p>
-                    </>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                      <div className="flex items-center space-x-4 mb-6">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center">
+                          <ShoppingCart className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h1 className="text-3xl font-bold text-gray-900">
+                            Sales
+                          </h1>
+                          <p className="text-gray-600">
+                            Manage your sales and orders
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-gray-600">
+                        Sales functionality will be implemented here.
+                      </p>
+                    </div>
                   }
                 />
-                <Route path="/partners" element={<PartnersPage />} />
+                <Route
+                  path="/partners"
+                  element={
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                      <PartnersPage />
+                    </div>
+                  }
+                />
               </Routes>
             </div>
           </div>
