@@ -204,6 +204,215 @@ app.delete('/partners/:id', (req, res) => {
   });
 });
 
+// ========== PACKAGE MANAGEMENT ENDPOINTS ==========
+
+// Get all packages
+app.get('/packages', (req, res) => {
+  const sql =
+    'SELECT * FROM packages WHERE is_active = TRUE ORDER BY price ASC';
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ error: 'DB error', details: err });
+    res.json({ packages: results });
+  });
+});
+
+// Get package by ID
+app.get('/packages/:id', (req, res) => {
+  const { id } = req.params;
+  const sql = 'SELECT * FROM packages WHERE id = ?';
+  db.query(sql, [id], (err, results) => {
+    if (err) return res.status(500).json({ error: 'DB error', details: err });
+    if (results.length === 0)
+      return res.status(404).json({ error: 'Package not found' });
+    res.json({ package: results[0] });
+  });
+});
+
+// Create new package
+app.post('/packages', (req, res) => {
+  const { name, description, speed_mbps, validity_days, price, is_active } =
+    req.body;
+
+  if (!name || !speed_mbps || !validity_days || !price) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const sql =
+    'INSERT INTO packages (name, description, speed_mbps, validity_days, price, is_active) VALUES (?, ?, ?, ?, ?, ?)';
+  const values = [
+    name,
+    description || '',
+    speed_mbps,
+    validity_days,
+    price,
+    is_active !== undefined ? is_active : true,
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) return res.status(500).json({ error: 'DB error', details: err });
+
+    // Get the created package
+    db.query(
+      'SELECT * FROM packages WHERE id = ?',
+      [result.insertId],
+      (err2, rows) => {
+        if (err2)
+          return res.status(500).json({ error: 'DB error', details: err2 });
+        res.json({ package: rows[0] });
+      }
+    );
+  });
+});
+
+// Update package
+app.put('/packages/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, description, speed_mbps, validity_days, price, is_active } =
+    req.body;
+
+  if (!name || !speed_mbps || !validity_days || !price) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const sql =
+    'UPDATE packages SET name=?, description=?, speed_mbps=?, validity_days=?, price=?, is_active=? WHERE id=?';
+  const values = [
+    name,
+    description || '',
+    speed_mbps,
+    validity_days,
+    price,
+    is_active !== undefined ? is_active : true,
+    id,
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) return res.status(500).json({ error: 'DB error', details: err });
+
+    // Get the updated package
+    db.query('SELECT * FROM packages WHERE id = ?', [id], (err2, rows) => {
+      if (err2)
+        return res.status(500).json({ error: 'DB error', details: err2 });
+      if (rows.length === 0)
+        return res.status(404).json({ error: 'Package not found' });
+      res.json({ package: rows[0] });
+    });
+  });
+});
+
+// Delete package
+app.delete('/packages/:id', (req, res) => {
+  const { id } = req.params;
+  db.query(
+    'UPDATE packages SET is_active = FALSE WHERE id = ?',
+    [id],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: 'DB error', details: err });
+      res.json({ success: true });
+    }
+  );
+});
+
+// ========== CUSTOMER PACKAGE ENDPOINTS ==========
+
+// Get customer packages (with package details)
+app.get('/customers/:customerId/packages', (req, res) => {
+  const { customerId } = req.params;
+  const sql = `
+    SELECT cp.*, p.name as package_name, p.description as package_description, 
+           p.speed_mbps, p.validity_days, p.price
+    FROM customer_packages cp
+    JOIN packages p ON cp.package_id = p.id
+    WHERE cp.customer_id = ?
+    ORDER BY cp.purchase_date DESC
+  `;
+
+  db.query(sql, [customerId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'DB error', details: err });
+    res.json({ customerPackages: results });
+  });
+});
+
+// Purchase package for customer
+app.post('/customers/:customerId/packages', (req, res) => {
+  const { customerId } = req.params;
+  const { package_id, start_date, payment_method, notes } = req.body;
+
+  if (!package_id || !start_date) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  // First, get package details to calculate end date and amount
+  db.query(
+    'SELECT * FROM packages WHERE id = ? AND is_active = TRUE',
+    [package_id],
+    (err, packageResults) => {
+      if (err) return res.status(500).json({ error: 'DB error', details: err });
+      if (packageResults.length === 0)
+        return res.status(404).json({ error: 'Package not found or inactive' });
+
+      const package = packageResults[0];
+      const startDate = new Date(start_date);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + package.validity_days);
+
+      const sql = `
+      INSERT INTO customer_packages 
+      (customer_id, package_id, start_date, end_date, amount_paid, payment_method, notes, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
+    `;
+      const values = [
+        customerId,
+        package_id,
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0],
+        package.price,
+        payment_method || 'cash',
+        notes || '',
+      ];
+
+      db.query(sql, values, (err, result) => {
+        if (err)
+          return res.status(500).json({ error: 'DB error', details: err });
+
+        // Get the created customer package with package details
+        const selectSql = `
+        SELECT cp.*, p.name as package_name, p.description as package_description, 
+               p.speed_mbps, p.validity_days, p.price
+        FROM customer_packages cp
+        JOIN packages p ON cp.package_id = p.id
+        WHERE cp.id = ?
+      `;
+
+        db.query(selectSql, [result.insertId], (err2, rows) => {
+          if (err2)
+            return res.status(500).json({ error: 'DB error', details: err2 });
+          res.json({ customerPackage: rows[0] });
+        });
+      });
+    }
+  );
+});
+
+// Update customer package status
+app.put('/customers/:customerId/packages/:packageId', (req, res) => {
+  const { customerId, packageId } = req.params;
+  const { status, notes } = req.body;
+
+  if (!status || !['active', 'expired', 'suspended'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+
+  const sql =
+    'UPDATE customer_packages SET status=?, notes=? WHERE id=? AND customer_id=?';
+  const values = [status, notes || '', packageId, customerId];
+
+  db.query(sql, values, (err, result) => {
+    if (err) return res.status(500).json({ error: 'DB error', details: err });
+    res.json({ success: true });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

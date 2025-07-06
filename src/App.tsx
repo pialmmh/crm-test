@@ -1,5 +1,14 @@
-import { BarChart3, Home, Menu, ShoppingCart, Users, X } from 'lucide-react';
+import {
+  BarChart3,
+  Home,
+  Menu,
+  ShoppingCart,
+  Users,
+  Wifi,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import {
   Navigate,
   Route,
@@ -10,6 +19,7 @@ import { ChatBubble } from './components/ChatBubble';
 import { ChatContainer } from './components/ChatContainer';
 import { ChatHeader } from './components/ChatHeader';
 import { ChatInput } from './components/ChatInput';
+import { PackagesPage } from './components/PackagesPage';
 import { PartnersPage } from './components/PartnersPage';
 import { useChat } from './hooks/useChat';
 
@@ -25,6 +35,7 @@ function App() {
     { name: 'Dashboard', path: '/dashboard', icon: Home },
     { name: 'Sales', path: '/sales', icon: ShoppingCart },
     { name: 'Partners', path: '/partners', icon: Users },
+    { name: 'Packages', path: '/packages', icon: Wifi },
   ];
 
   return (
@@ -184,6 +195,14 @@ function App() {
                     </div>
                   }
                 />
+                <Route
+                  path="/packages"
+                  element={
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                      <PackagesPage />
+                    </div>
+                  }
+                />
               </Routes>
             </div>
           </div>
@@ -204,6 +223,53 @@ function App() {
 
         {/* Chat Bubble Button */}
         <ChatBubble onClick={toggleChat} isOpen={isChatOpen} />
+
+        {/* Toast Notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#fff',
+              color: '#333',
+              boxShadow:
+                '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #e5e7eb',
+              borderRadius: '12px',
+              padding: '16px',
+            },
+            success: {
+              style: {
+                border: '1px solid #10b981',
+                background: '#f0fdf4',
+              },
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              style: {
+                border: '1px solid #ef4444',
+                background: '#fef2f2',
+              },
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+            loading: {
+              style: {
+                border: '1px solid #3b82f6',
+                background: '#eff6ff',
+              },
+              iconTheme: {
+                primary: '#3b82f6',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
       </div>
     </Router>
   );

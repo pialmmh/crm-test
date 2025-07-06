@@ -1,5 +1,15 @@
-import { Edit2, FileText, Plus, Search, Trash2, Users } from 'lucide-react';
+import {
+  Edit2,
+  FileText,
+  Package,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { CustomerPackages } from './CustomerPackages';
 
 const PARTNER_PAGE_SIZE = 5;
 const BASE_URL = 'http://localhost:3001';
@@ -28,6 +38,8 @@ export const PartnersPage = () => {
   const [passportViewModal, setPassportViewModal] = useState(false);
   const [selectedPassportFile, setSelectedPassportFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [packagesModalOpen, setPackagesModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   useEffect(() => {
     setPartnerLoading(true);
@@ -41,7 +53,7 @@ export const PartnersPage = () => {
       .catch((error) => {
         console.error('Error fetching partners:', error);
         setPartnerLoading(false);
-        alert('Error fetching partners: ' + error.message);
+        toast.error('Failed to load partners. Please try again.');
       });
   }, []);
 
@@ -85,6 +97,7 @@ export const PartnersPage = () => {
   const openNidViewModal = (nidFilename) => {
     setSelectedNidFile(nidFilename);
     setNidViewModal(true);
+    toast.success('📄 Opening NID document viewer');
   };
 
   const closeNidViewModal = () => {
@@ -95,6 +108,7 @@ export const PartnersPage = () => {
   const openPassportViewModal = (passportFilename) => {
     setSelectedPassportFile(passportFilename);
     setPassportViewModal(true);
+    toast.success('📄 Opening Passport document viewer');
   };
 
   const closePassportViewModal = () => {
@@ -102,8 +116,45 @@ export const PartnersPage = () => {
     setSelectedPassportFile(null);
   };
 
+  const openPackagesModal = (partner) => {
+    setSelectedCustomer(partner);
+    setPackagesModalOpen(true);
+  };
+
+  const closePackagesModal = () => {
+    setPackagesModalOpen(false);
+    setSelectedCustomer(null);
+  };
+
   const handlePartnerFormChange = (e) => {
     const { name, value, files } = e.target;
+
+    // Handle file uploads with validation and feedback
+    if (files && files[0]) {
+      const file = files[0];
+      const maxSize = 5 * 1024 * 1024; // 5MB limit
+
+      if (file.size > maxSize) {
+        toast.error('File size must be less than 5MB');
+        e.target.value = ''; // Clear the input
+        return;
+      }
+
+      const validTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'application/pdf',
+      ];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please select a valid file type (JPG, PNG, or PDF)');
+        e.target.value = ''; // Clear the input
+        return;
+      }
+
+      toast.success(`📎 ${file.name} selected for upload`);
+    }
+
     setPartnerForm((prev) => ({
       ...prev,
       [name]: files ? files[0] : value,
@@ -112,6 +163,12 @@ export const PartnersPage = () => {
 
   const handlePartnerSubmit = async (e) => {
     e.preventDefault();
+
+    // Show loading toast
+    const loadingToast = toast.loading(
+      partnerModalMode === 'new' ? 'Creating partner...' : 'Updating partner...'
+    );
+
     try {
       const formData = new FormData();
       formData.append('name', partnerForm.name);
@@ -139,9 +196,21 @@ export const PartnersPage = () => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error creating/updating partner:', errorData);
-        alert('Error: ' + (errorData.error || 'Unknown error'));
+        toast.error(errorData.error || 'Failed to save partner', {
+          id: loadingToast,
+        });
         return;
       }
+
+      // Success toast
+      toast.success(
+        partnerModalMode === 'new'
+          ? '🎉 Partner created successfully!'
+          : '✅ Partner updated successfully!',
+        {
+          id: loadingToast,
+        }
+      );
 
       closePartnerModal();
       setPartnerPage(1);
@@ -153,12 +222,22 @@ export const PartnersPage = () => {
       setPartnerTotal((data.partners || []).length);
     } catch (error) {
       console.error('Error in handlePartnerSubmit:', error);
-      alert('Error: ' + error.message);
+      toast.error('❌ An error occurred while saving partner', {
+        id: loadingToast,
+      });
     }
   };
 
-  const handleDeletePartner = async (id) => {
-    if (!confirm('Are you sure you want to delete this partner?')) return;
+  const handleDeletePartner = async (id, partnerName) => {
+    // Custom confirmation with better UX
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${partnerName}"?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    // Show loading toast
+    const loadingToast = toast.loading('Deleting partner...');
 
     try {
       const response = await fetch(`${BASE_URL}/partners/${id}`, {
@@ -167,9 +246,16 @@ export const PartnersPage = () => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error deleting partner:', errorData);
-        alert('Error: ' + (errorData.error || 'Unknown error'));
+        toast.error(errorData.error || 'Failed to delete partner', {
+          id: loadingToast,
+        });
         return;
       }
+
+      // Success toast
+      toast.success('🗑️ Partner deleted successfully!', {
+        id: loadingToast,
+      });
 
       // Refresh the list
       const listResponse = await fetch(`${BASE_URL}/partners`);
@@ -178,7 +264,9 @@ export const PartnersPage = () => {
       setPartnerTotal((data.partners || []).length);
     } catch (error) {
       console.error('Error in handleDeletePartner:', error);
-      alert('Error: ' + error.message);
+      toast.error('❌ An error occurred while deleting partner', {
+        id: loadingToast,
+      });
     }
   };
 
@@ -357,6 +445,15 @@ export const PartnersPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
+                        {partner.partner_type === 'customer' && (
+                          <button
+                            onClick={() => openPackagesModal(partner)}
+                            className="text-purple-600 hover:text-purple-900 p-2 hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Manage Packages"
+                          >
+                            <Package className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => openEditPartnerModal(partner)}
                           className="text-indigo-600 hover:text-indigo-900 p-2 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -365,7 +462,9 @@ export const PartnersPage = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeletePartner(partner.id)}
+                          onClick={() =>
+                            handleDeletePartner(partner.id, partner.name)
+                          }
                           className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
                           title="Delete Partner"
                         >
@@ -697,6 +796,43 @@ export const PartnersPage = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Packages Modal */}
+      {packagesModalOpen && selectedCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl w-full max-w-7xl mx-4 max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Package Management - {selectedCustomer.name}
+              </h2>
+              <button
+                onClick={closePackagesModal}
+                className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-auto max-h-[calc(90vh-80px)]">
+              <CustomerPackages
+                customerId={selectedCustomer.id}
+                customerName={selectedCustomer.name}
+              />
             </div>
           </div>
         </div>
