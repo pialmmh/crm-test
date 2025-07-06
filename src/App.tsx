@@ -22,19 +22,19 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gray-100 flex">
         {/* Side Menu Bar */}
-        <div className="w-44 sm:w-56 md:w-64 bg-gray-800 text-white flex flex-col p-2 sm:p-4 min-h-screen">
-          <h3 className="text-base sm:text-lg font-semibold mb-2 mt-4">
+        <div className="w-20 sm:w-24 md:w-32 bg-gray-800 text-white flex flex-col p-1 min-h-screen">
+          <h3 className="text-xs sm:text-sm font-semibold mb-1 mt-1 px-1">
             ERP/CRM
           </h3>
-          <ul className="space-y-1 sm:space-y-2">
+          <ul className="space-y-0.5">
             <li>
               <a
                 href="/dashboard"
-                className={`w-full block text-left hover:text-gray-300 ${
+                className={`w-full block text-left hover:text-gray-300 px-1 py-0.5 ${
                   window.location.pathname === '/dashboard'
                     ? 'font-bold underline'
                     : ''
-                } text-xs sm:text-sm`}
+                } text-xs`}
               >
                 Dashboard
               </a>
@@ -42,11 +42,11 @@ function App() {
             <li>
               <a
                 href="/sales"
-                className={`w-full block text-left hover:text-gray-300 ${
+                className={`w-full block text-left hover:text-gray-300 px-1 py-0.5 ${
                   window.location.pathname === '/sales'
                     ? 'font-bold underline'
                     : ''
-                } text-xs sm:text-sm`}
+                } text-xs`}
               >
                 Sales
               </a>
@@ -54,11 +54,11 @@ function App() {
             <li>
               <a
                 href="/partners"
-                className={`w-full block text-left hover:text-gray-300 ${
+                className={`w-full block text-left hover:text-gray-300 px-1 py-0.5 ${
                   window.location.pathname === '/partners'
                     ? 'font-bold underline'
                     : ''
-                } text-xs sm:text-sm`}
+                } text-xs`}
               >
                 Partners
               </a>

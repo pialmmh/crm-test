@@ -21,6 +21,8 @@ export const PartnersPage = () => {
   const [partnerPage, setPartnerPage] = useState(1);
   const [partnerTotal, setPartnerTotal] = useState(0);
   const [partnerLoading, setPartnerLoading] = useState(false);
+  const [nidViewModal, setNidViewModal] = useState(false);
+  const [selectedNidFile, setSelectedNidFile] = useState(null);
 
   useEffect(() => {
     setPartnerLoading(true);
@@ -65,6 +67,16 @@ export const PartnersPage = () => {
   };
 
   const closePartnerModal = () => setPartnerModalOpen(false);
+
+  const openNidViewModal = (nidFilename) => {
+    setSelectedNidFile(nidFilename);
+    setNidViewModal(true);
+  };
+
+  const closeNidViewModal = () => {
+    setNidViewModal(false);
+    setSelectedNidFile(null);
+  };
 
   const handlePartnerFormChange = (e) => {
     const { name, value, files } = e.target;
@@ -188,13 +200,12 @@ export const PartnersPage = () => {
                     <td className="px-2 sm:px-4 py-2 border-b">{p.address}</td>
                     <td className="px-2 sm:px-4 py-2 border-b">
                       {p.nid_filename ? (
-                        <a
-                          href={`${BASE_URL}/uploads/${p.nid_filename}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => openNidViewModal(p.nid_filename)}
+                          className="text-blue-600 hover:underline"
                         >
                           View
-                        </a>
+                        </button>
                       ) : (
                         '—'
                       )}
@@ -257,51 +268,85 @@ export const PartnersPage = () => {
               onSubmit={handlePartnerSubmit}
               className="space-y-3 sm:space-y-4"
             >
-              <select
-                name="partner_type"
-                value={partnerForm.partner_type}
-                onChange={handlePartnerFormChange}
-                className="border rounded px-2 py-1 w-full"
-              >
-                <option value="customer">Customer</option>
-                <option value="vendor">Vendor</option>
-              </select>
-              <input
-                name="name"
-                value={partnerForm.name}
-                onChange={handlePartnerFormChange}
-                placeholder="Name"
-                className="border rounded px-2 py-1 w-full"
-                required
-              />
-              <input
-                name="email"
-                value={partnerForm.email}
-                onChange={handlePartnerFormChange}
-                placeholder="Email"
-                className="border rounded px-2 py-1 w-full"
-              />
-              <input
-                name="phone"
-                value={partnerForm.phone}
-                onChange={handlePartnerFormChange}
-                placeholder="Phone"
-                className="border rounded px-2 py-1 w-full"
-              />
-              <input
-                name="address"
-                value={partnerForm.address}
-                onChange={handlePartnerFormChange}
-                placeholder="Address"
-                className="border rounded px-2 py-1 w-full"
-              />
-              <input
-                name="nid"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handlePartnerFormChange}
-                className="border rounded px-2 py-1 w-full"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Partner Type
+                </label>
+                <select
+                  name="partner_type"
+                  value={partnerForm.partner_type}
+                  onChange={handlePartnerFormChange}
+                  className="border rounded px-2 py-1 w-full"
+                >
+                  <option value="customer">Customer</option>
+                  <option value="vendor">Vendor</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  name="name"
+                  value={partnerForm.name}
+                  onChange={handlePartnerFormChange}
+                  placeholder="Enter partner name"
+                  className="border rounded px-2 py-1 w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  name="email"
+                  type="email"
+                  value={partnerForm.email}
+                  onChange={handlePartnerFormChange}
+                  placeholder="Enter email address"
+                  className="border rounded px-2 py-1 w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone
+                </label>
+                <input
+                  name="phone"
+                  value={partnerForm.phone}
+                  onChange={handlePartnerFormChange}
+                  placeholder="Enter phone number"
+                  className="border rounded px-2 py-1 w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <input
+                  name="address"
+                  value={partnerForm.address}
+                  onChange={handlePartnerFormChange}
+                  placeholder="Enter address"
+                  className="border rounded px-2 py-1 w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  NID Document
+                </label>
+                <input
+                  name="nid"
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handlePartnerFormChange}
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Supported formats: Images (JPG, PNG) and PDF
+                </p>
+              </div>
               <button
                 type="submit"
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
@@ -309,6 +354,52 @@ export const PartnersPage = () => {
                 {partnerModalMode === 'new' ? 'Add' : 'Update'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* NID View Modal */}
+      {nidViewModal && selectedNidFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] relative">
+            <button
+              onClick={closeNidViewModal}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">NID Document</h2>
+            <div className="overflow-auto max-h-[75vh]">
+              {selectedNidFile.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={`${BASE_URL}/uploads/${selectedNidFile}`}
+                  className="w-full h-96 border"
+                  title="NID Document"
+                />
+              ) : (
+                <img
+                  src={`${BASE_URL}/uploads/${selectedNidFile}`}
+                  alt="NID Document"
+                  className="w-full h-auto max-h-96 object-contain border"
+                />
+              )}
+            </div>
+            <div className="mt-4 flex justify-center">
+              <a
+                href={`${BASE_URL}/uploads/${selectedNidFile}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mr-2"
+              >
+                Open in New Tab
+              </a>
+              <button
+                onClick={closeNidViewModal}
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
