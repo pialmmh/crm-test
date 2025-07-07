@@ -2,7 +2,7 @@ import { CreditCard, Package, ShoppingCart, Wifi } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3003';
 
 export const CustomerPackages = ({ customerId, customerName }) => {
   const [packages, setPackages] = useState([]);

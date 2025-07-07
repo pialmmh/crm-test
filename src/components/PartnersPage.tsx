@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import { CustomerPackages } from './CustomerPackages';
 
 const PARTNER_PAGE_SIZE = 5;
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3003';
 
 export const PartnersPage = () => {
   const [partners, setPartners] = useState([]);

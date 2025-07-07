@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 const PACKAGE_PAGE_SIZE = 8;
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3003';
 
 export const PackagesPage = () => {
   const [packages, setPackages] = useState([]);

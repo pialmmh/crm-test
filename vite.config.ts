@@ -9,7 +9,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/chat': 'http://localhost:3001',
+      '/chat': 'http://localhost:3003',
     },
   },
 });

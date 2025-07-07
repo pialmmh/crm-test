@@ -2,7 +2,7 @@ import { Edit2, FileText, Plus, Search, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const PARTNER_PAGE_SIZE = 5;
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:3003';
 
 export const PartnersPage = () => {
   const [partners, setPartners] = useState([]);

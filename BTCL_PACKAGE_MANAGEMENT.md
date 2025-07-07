@@ -182,7 +182,7 @@ The system comes pre-loaded with 8 sample packages:
 
 3. **Access the Application**:
    - Frontend: http://localhost:5173
-   - Backend: http://localhost:3001
+   - Backend: http://localhost:3003
 
 ## Technology Stack
 

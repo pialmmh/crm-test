@@ -27,7 +27,7 @@ npm install
 2. Add your OpenAI API key to `server/.env`:
    ```
    OPENAI_API_KEY=your_openai_api_key_here
-   PORT=3001
+   PORT=3003
    ```
 
 ### 3. Run the Application
@@ -46,7 +46,7 @@ npm run dev:server
 ```
 
 The frontend will be available at `http://localhost:5173`
-The backend will be available at `http://localhost:3001`
+The backend will be available at `http://localhost:3003`
 
 ### 4. Build for Production
 ```bash
